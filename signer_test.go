@@ -1,6 +1,7 @@
 package signer
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -36,6 +37,44 @@ func TestGetAuthorizationHeader(t *testing.T) {
 			}
 
 			if got != tC.want {
+				t.Errorf("got '%v' want '%v'", got, tC.want)
+			}
+		})
+	}
+}
+
+func TestExtractQueryParams(t *testing.T) {
+	testCases := []struct {
+		name string
+		uri  string
+		want map[string][]string
+	}{
+		{
+			name: "Simple uri",
+			uri:  "https://google.com/?test=true",
+			want: map[string][]string{"test": []string{"true"}},
+		},
+		{
+			name: "Complex uri",
+			uri:  "https://google.com/?https://sandbox.api.mastercard.com/merchantid/v1/merchantid?MerchantId=GOOGLE%20LTD%20ADWORDS%20%28CC%40GOOGLE.COM%29&Format=XML&Type=ExactMatch&Format=JSON&EmptyVal=",
+			want: map[string][]string{
+				"EmptyVal":   []string{""},
+				"Format":     []string{"JSON", "XML"},
+				"MerchantId": []string{"GOOGLE%20LTD%20ADWORDS%20%28CC%40GOOGLE.COM%29"},
+				"Type":       []string{"ExactMatch"},
+			},
+		},
+	}
+
+	for _, tC := range testCases {
+		t.Run(tC.name, func(t *testing.T) {
+			got, err := extractQueryParams(tC.uri)
+
+			if err != nil {
+				t.Error(err)
+			}
+
+			if !reflect.DeepEqual(got, tC.want) {
 				t.Errorf("got '%v' want '%v'", got, tC.want)
 			}
 		})
