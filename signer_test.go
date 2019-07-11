@@ -29,7 +29,10 @@ func TestGetAuthorizationHeader(t *testing.T) {
 	}
 
 	for _, tC := range testCases {
+		tC := tC
 		t.Run(tC.name, func(t *testing.T) {
+			t.Parallel()
+
 			got, err := GetAuthorizationHeader(uri, method, tC.body, consumerKey, signingKey)
 
 			if err != nil {
@@ -51,12 +54,12 @@ func TestExtractQueryParams(t *testing.T) {
 	}{
 		{
 			name: "Simple uri",
-			uri:  "https://google.com/?test=true",
+			uri:  "https://example.com/?test=true",
 			want: map[string][]string{"test": []string{"true"}},
 		},
 		{
 			name: "Complex uri",
-			uri:  "https://google.com/?https://sandbox.api.mastercard.com/merchantid/v1/merchantid?MerchantId=GOOGLE%20LTD%20ADWORDS%20%28CC%40GOOGLE.COM%29&Format=XML&Type=ExactMatch&Format=JSON&EmptyVal=",
+			uri:  "https://sandbox.api.mastercard.com/merchantid/v1/merchantid?MerchantId=GOOGLE%20LTD%20ADWORDS%20%28CC%40GOOGLE.COM%29&Format=XML&Type=ExactMatch&Format=JSON&EmptyVal=",
 			want: map[string][]string{
 				"EmptyVal":   []string{""},
 				"Format":     []string{"JSON", "XML"},
@@ -64,10 +67,40 @@ func TestExtractQueryParams(t *testing.T) {
 				"Type":       []string{"ExactMatch"},
 			},
 		},
+		{
+			name: "Support RFC",
+			uri:  "https://example.com/request?b5=%3D%253D&a3=a&c%40=&a2=r%20b",
+			want: map[string][]string{
+				"b5":   []string{"%3D%253D"},
+				"a3":   []string{"a"},
+				"c%40": []string{""},
+				"a2":   []string{"r%20b"},
+			},
+		},
+		{
+			name: "Non-encoded params",
+			uri:  "https://example.com/request?colon=:&plus=+&comma=,",
+			want: map[string][]string{
+				"colon": []string{":"},
+				"plus":  []string{"+"},
+				"comma": []string{","},
+			},
+		},
+		{
+			name: "Encoded params",
+			uri:  "https://example.com/request?colon=%3A&plus=%2B&comma=%2C",
+			want: map[string][]string{
+				"colon": []string{"%3A"},
+				"plus":  []string{"%2B"},
+				"comma": []string{"%2C"},
+			},
+		},
 	}
 
 	for _, tC := range testCases {
+		tC := tC
 		t.Run(tC.name, func(t *testing.T) {
+			t.Parallel()
 			got, err := extractQueryParams(tC.uri)
 
 			if err != nil {
@@ -75,7 +108,7 @@ func TestExtractQueryParams(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(got, tC.want) {
-				t.Errorf("got '%v' want '%v'", got, tC.want)
+				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
 			}
 		})
 	}
