@@ -2,6 +2,7 @@ package signer
 
 import (
 	"reflect"
+	"strconv"
 	"testing"
 )
 
@@ -114,8 +115,9 @@ func TestExtractQueryParams(t *testing.T) {
 	}
 }
 
-func TestgetOAuthParams(t *testing.T) {
+func TestGetOAuthParams(t *testing.T) {
 	commonConsumerKey := "aaa!aaa"
+	timestamp := getTimestamp()
 
 	testCases := []struct {
 		name        string
@@ -132,7 +134,7 @@ func TestgetOAuthParams(t *testing.T) {
 				"oauth_consumer_key":     commonConsumerKey,
 				"oauth_nonce":            "uTeLPs6K",
 				"oauth_signature_method": "RSA-SHA256",
-				"oauth_timestamp":        getTimestamp(),
+				"oauth_timestamp":        timestamp,
 				"oauth_version":          "1.0",
 			},
 		},
@@ -145,7 +147,7 @@ func TestgetOAuthParams(t *testing.T) {
 				"oauth_consumer_key":     commonConsumerKey,
 				"oauth_nonce":            "uTeLPs6K",
 				"oauth_signature_method": "RSA-SHA256",
-				"oauth_timestamp":        getTimestamp(),
+				"oauth_timestamp":        timestamp,
 				"oauth_version":          "1.0",
 			},
 		},
@@ -165,6 +167,58 @@ func TestgetOAuthParams(t *testing.T) {
 
 			if !reflect.DeepEqual(got, tC.want) {
 				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
+			}
+		})
+	}
+}
+
+func TestGetTimestamp(t *testing.T) {
+	got := getTimestamp()
+
+	gotNumber, err := strconv.Atoi(got)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if gotNumber <= 0 {
+		t.Errorf("got '%v', want >0", gotNumber)
+	}
+}
+
+func TestContains(t *testing.T) {
+	array := []string{"Brad", "John", "Anna"}
+
+	testCases := []struct {
+		name    string
+		array   []string
+		element string
+		want    bool
+	}{
+		{
+			name:    "Exist",
+			array:   array,
+			element: "John",
+			want:    true,
+		},
+		{
+			name:    "Doesn't exist",
+			array:   array,
+			element: "Joshua",
+			want:    false,
+		},
+	}
+
+	for _, tC := range testCases {
+		tC := tC
+
+		t.Run(tC.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := contains(tC.array, tC.element)
+
+			if got != tC.want {
+				t.Errorf("\ngot '%v'\nwant'%v'", got, tC.want)
 			}
 		})
 	}

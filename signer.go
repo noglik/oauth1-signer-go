@@ -3,7 +3,9 @@ package signer
 import (
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
+	"time"
 )
 
 // GetAuthorizationHeader is a main function which returns OAuth1.0a header
@@ -43,6 +45,14 @@ func getOAuthParams(consumerKey, payload string) (map[string]string, error) {
 	OAuthParams := map[string]string{}
 
 	return OAuthParams, nil
+}
+
+func getTimestamp() string {
+	nowUnix := time.Now().Unix()
+
+	timestamp := strconv.Itoa(int(nowUnix))
+
+	return timestamp
 }
 
 func contains(slice []string, el string) bool {
