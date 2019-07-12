@@ -113,3 +113,59 @@ func TestExtractQueryParams(t *testing.T) {
 		})
 	}
 }
+
+func TestgetOAuthParams(t *testing.T) {
+	commonConsumerKey := "aaa!aaa"
+
+	testCases := []struct {
+		name        string
+		consumerKey string
+		payload     string
+		want        map[string]string
+	}{
+		{
+			name:        "Without payload",
+			consumerKey: commonConsumerKey,
+			payload:     "",
+			want: map[string]string{
+				"oauth_body_hash":        "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
+				"oauth_consumer_key":     commonConsumerKey,
+				"oauth_nonce":            "uTeLPs6K",
+				"oauth_signature_method": "RSA-SHA256",
+				"oauth_timestamp":        getTimestamp(),
+				"oauth_version":          "1.0",
+			},
+		},
+		{
+			name:        "Without payload",
+			consumerKey: commonConsumerKey,
+			payload:     `{ my: "payload" }`,
+			want: map[string]string{
+				"oauth_body_hash":        "Qm/nLCqwlog0uoCDvypgninzNQ25YHgTmUDl/zOgT1s=",
+				"oauth_consumer_key":     commonConsumerKey,
+				"oauth_nonce":            "uTeLPs6K",
+				"oauth_signature_method": "RSA-SHA256",
+				"oauth_timestamp":        getTimestamp(),
+				"oauth_version":          "1.0",
+			},
+		},
+	}
+
+	for _, tC := range testCases {
+		tC := tC
+
+		t.Run(tC.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := getOAuthParams(tC.consumerKey, tC.payload)
+
+			if err != nil {
+				t.Error(err)
+			}
+
+			if !reflect.DeepEqual(got, tC.want) {
+				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
+			}
+		})
+	}
+}

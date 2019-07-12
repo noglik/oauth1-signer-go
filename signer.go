@@ -39,6 +39,12 @@ func extractQueryParams(uri string) (map[string][]string, error) {
 	return queryMap, nil
 }
 
+func getOAuthParams(consumerKey, payload string) (map[string]string, error) {
+	OAuthParams := map[string]string{}
+
+	return OAuthParams, nil
+}
+
 func contains(slice []string, el string) bool {
 	for _, v := range slice {
 		if v == el {
