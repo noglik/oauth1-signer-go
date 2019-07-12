@@ -47,7 +47,21 @@ func extractQueryParams(uri string) (map[string][]string, error) {
 }
 
 func getOAuthParams(consumerKey, payload string) (map[string]string, error) {
+	var err error
 	OAuthParams := map[string]string{}
+
+	OAuthParams["oauth_body_hash"] = getBodyHash(payload)
+	OAuthParams["oauth_consumer_key"] = consumerKey
+
+	OAuthParams["oauth_nonce"], err = getNonce()
+
+	if err != nil {
+		return map[string]string{}, err
+	}
+
+	OAuthParams["oauth_signature_method"] = "RSA-SHA256"
+	OAuthParams["oauth_timestamp"] = getTimestamp()
+	OAuthParams["oauth_version"] = "1.0"
 
 	return OAuthParams, nil
 }
