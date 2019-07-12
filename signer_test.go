@@ -212,6 +212,39 @@ func TestGetNonce(t *testing.T) {
 	}
 }
 
+func TestGetBodyHash(t *testing.T) {
+	testCases := []struct {
+		name    string
+		payload string
+		want    string
+	}{
+		{
+			name:    "Empty string",
+			payload: "",
+			want:    "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
+		},
+		{
+			name:    "String",
+			payload: `{ my: "payload" }`,
+			want:    "Qm/nLCqwlog0uoCDvypgninzNQ25YHgTmUDl/zOgT1s=",
+		},
+	}
+
+	for _, tC := range testCases {
+		tC := tC
+
+		t.Run(tC.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := getBodyHash(tC.payload)
+
+			if got != tC.want {
+				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
+			}
+		})
+	}
+}
+
 func TestContains(t *testing.T) {
 	array := []string{"Brad", "John", "Anna"}
 

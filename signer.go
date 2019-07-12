@@ -2,6 +2,8 @@ package signer
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"net/url"
 	"sort"
 	"strconv"
@@ -72,6 +74,12 @@ func getNonce() (string, error) {
 	}
 
 	return string(buf), nil
+}
+
+func getBodyHash(payload string) string {
+	hash := sha256.Sum256([]byte(payload))
+
+	return base64.StdEncoding.EncodeToString(hash[:])
 }
 
 // generateRandomBytes returns array filled with securely generated random bytes of given length
