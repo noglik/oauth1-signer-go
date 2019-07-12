@@ -96,6 +96,39 @@ func getBodyHash(payload string) string {
 	return base64.StdEncoding.EncodeToString(hash[:])
 }
 
+func toOAuthParamString(queryParams map[string][]string, oauthParams map[string]string) string {
+	var paramsBuilder strings.Builder
+	params := ""
+	consolidatedParams := queryParams
+
+	for k, v := range oauthParams {
+		if _, ok := consolidatedParams[k]; ok {
+			consolidatedParams[k] = append(consolidatedParams[k], v)
+		} else {
+			consolidatedParams[k] = []string{v}
+		}
+	}
+
+	keys := make([]string, len(consolidatedParams))
+	for k := range consolidatedParams {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		sort.Strings(consolidatedParams[k])
+
+		for _, vV := range consolidatedParams[k] {
+			str := k + "=" + vV + "&"
+			paramsBuilder.WriteString(str)
+		}
+	}
+
+	params = strings.TrimSuffix(paramsBuilder.String(), "&")
+
+	return params
+}
+
 // generateRandomBytes returns array filled with securely generated random bytes of given length
 func generateRandomBytes(n int) ([]byte, error) {
 	buf := make([]byte, n)

@@ -257,6 +257,60 @@ func TestGetBodyHash(t *testing.T) {
 	}
 }
 
+func TestToOAuthParamString(t *testing.T) {
+	testCases := []struct {
+		name        string
+		queryParams map[string][]string
+		oauthParams map[string]string
+		want        string
+	}{
+		{
+			name: "RFC example",
+			queryParams: map[string][]string{
+				"b5":   []string{"%3D%253D"},
+				"a3":   []string{"a", "2%20q"},
+				"c%40": []string{""},
+				"a2":   []string{"r%20b"},
+				"c2":   []string{""},
+			},
+			oauthParams: map[string]string{
+				"oauth_consumer_key":     "9djdj82h48djs9d2",
+				"oauth_token":            "kkk9d7dh3k39sjv7",
+				"oauth_signature_method": "HMAC-SHA1",
+				"oauth_timestamp":        "137131201",
+				"oauth_nonce":            "7d8f3e4a",
+			},
+			want: "a2=r%20b&a3=2%20q&a3=a&b5=%3D%253D&c%40=&c2=&oauth_consumer_key=9djdj82h48djs9d2&oauth_nonce=7d8f3e4a&oauth_signature_method=HMAC-SHA1&oauth_timestamp=137131201&oauth_token=kkk9d7dh3k39sjv7",
+		},
+		{
+			name: "Ascended",
+			queryParams: map[string][]string{
+				"b": []string{"b"},
+				"A": []string{"a", "A"},
+				"B": []string{"B"},
+				"a": []string{"A", "a"},
+				"0": []string{"0"},
+			},
+			oauthParams: map[string]string{},
+			want:        "0=0&A=A&A=a&B=B&a=A&a=a&b=b",
+		},
+	}
+
+	for _, tC := range testCases {
+		tC := tC
+
+		t.Run(tC.name, func(t *testing.T) {
+			// t.Parallel()
+
+			got := toOAuthParamString(tC.queryParams, tC.oauthParams)
+
+			if got != tC.want {
+				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
+			}
+		})
+	}
+}
+
 func TestContains(t *testing.T) {
 	array := []string{"Brad", "John", "Anna"}
 
