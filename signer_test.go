@@ -2,6 +2,7 @@ package signer
 
 import (
 	"reflect"
+	"regexp"
 	"strconv"
 	"testing"
 )
@@ -186,6 +187,31 @@ func TestGetTimestamp(t *testing.T) {
 	}
 }
 
+func TestGetNonce(t *testing.T) {
+	regexpString := "^[a-zA-Z0-9]+$"
+	r, err := regexp.Compile(regexpString)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	got, err := getNonce()
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	length := len(got)
+
+	if length != nonceLength {
+		t.Errorf("got '%v' with length %v, but want length =%v", got, length, nonceLength)
+	}
+
+	if !r.MatchString(got) {
+		t.Errorf("got '%v', which didn't match regexp '%v'", got, regexpString)
+	}
+}
+
 func TestContains(t *testing.T) {
 	array := []string{"Brad", "John", "Anna"}
 
@@ -219,6 +245,40 @@ func TestContains(t *testing.T) {
 
 			if got != tC.want {
 				t.Errorf("\ngot '%v'\nwant'%v'", got, tC.want)
+			}
+		})
+	}
+}
+
+func TestGenerateRandomBytes(t *testing.T) {
+	testCases := []struct {
+		name   string
+		length int
+	}{
+		{
+			name:   "Length 6",
+			length: 6,
+		},
+		{
+			name:   "Length 8",
+			length: 8,
+		},
+	}
+
+	for _, tC := range testCases {
+		tC := tC
+
+		t.Run(tC.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := generateRandomBytes(tC.length)
+
+			if err != nil {
+				t.Error(err)
+			}
+
+			if len(got) != tC.length {
+				t.Errorf("got length %v, want %v", len(got), tC.length)
 			}
 		})
 	}
