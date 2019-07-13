@@ -129,6 +129,17 @@ func toOAuthParamString(queryParams map[string][]string, oauthParams map[string]
 	return params
 }
 
+func getBaseURIString(uri string) (string, error) {
+	URL, err := url.Parse(uri)
+
+	if err != nil {
+		return "", err
+	}
+
+	base := URL.Scheme + "://" + strings.ToLower(URL.Host) + URL.Path
+	return base, nil
+}
+
 // generateRandomBytes returns array filled with securely generated random bytes of given length
 func generateRandomBytes(n int) ([]byte, error) {
 	buf := make([]byte, n)

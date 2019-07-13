@@ -311,6 +311,48 @@ func TestToOAuthParamString(t *testing.T) {
 	}
 }
 
+func TestGetBaseURIString(t *testing.T) {
+	testCases := []struct {
+		name string
+		uri  string
+		want string
+	}{
+		{
+			name: "Simple uri",
+			uri:  "http://example.com/test/?test=1",
+			want: "http://example.com/test/",
+		},
+		{
+			name: "Complicated uri",
+			uri:  "HTTPS://SANDBOX.api.mastercard.com/merchantid/v1/merchantid?MerchantId=GOOGLE%20LTD%20ADWORDS%20%28CC%40GOOGLE.COM%29&Format=XML&Type=ExactMatch&Format=JSON",
+			want: "https://sandbox.api.mastercard.com/merchantid/v1/merchantid",
+		},
+		{
+			name: "With base auth",
+			uri:  "https://dev:secrete@192.168.100.2:8080/user?test=1",
+			want: "https://192.168.100.2:8080/user",
+		},
+	}
+
+	for _, tC := range testCases {
+		tC := tC
+
+		t.Run(tC.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := getBaseURIString(tC.uri)
+
+			if err != nil {
+				t.Error(err)
+			}
+
+			if got != tC.want {
+				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
+			}
+		})
+	}
+}
+
 func TestContains(t *testing.T) {
 	array := []string{"Brad", "John", "Anna"}
 
