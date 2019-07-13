@@ -140,6 +140,12 @@ func getBaseURIString(uri string) (string, error) {
 	return base, nil
 }
 
+func getSignatureBaseString(method, baseURI, params string) string {
+	sbs := url.QueryEscape(method) + "&" + url.QueryEscape(baseURI) + "&" + url.QueryEscape(params)
+
+	return sbs
+}
+
 // generateRandomBytes returns array filled with securely generated random bytes of given length
 func generateRandomBytes(n int) ([]byte, error) {
 	buf := make([]byte, n)
