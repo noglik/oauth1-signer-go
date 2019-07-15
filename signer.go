@@ -1,9 +1,14 @@
 package signer
 
 import (
-	"crypto/rand"
+	"crypto"
+	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/base64"
+	"encoding/pem"
+	"io"
+	"math/rand"
 	"net/url"
 	"sort"
 	"strconv"
@@ -144,6 +149,31 @@ func getSignatureBaseString(method, baseURI, params string) string {
 	sbs := url.QueryEscape(method) + "&" + url.QueryEscape(baseURI) + "&" + url.QueryEscape(params)
 
 	return sbs
+}
+
+func signSignatureBaseString(signatureBaseString, signingKey string) (string, error) {
+	var Reader io.Reader
+	var err error
+	var privateKey *rsa.PrivateKey
+	var signature []byte
+
+	block, _ := pem.Decode([]byte(signingKey))
+
+	privateKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+
+	if err != nil {
+		return "", err
+	}
+
+	hashed := sha256.Sum256([]byte(signatureBaseString))
+
+	signature, err = rsa.SignPKCS1v15(Reader, privateKey, crypto.SHA256, hashed[:])
+
+	if err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(signature), nil
 }
 
 // generateRandomBytes returns array filled with securely generated random bytes of given length
