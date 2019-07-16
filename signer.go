@@ -18,37 +18,55 @@ import (
 
 const nonceLength = 8
 
+type impure interface {
+	getNonce() (string, error)
+	getTimestamp() string
+}
+
+type signer struct {
+	consumerKey string
+	signingKey  string
+	impure
+}
+
+func NewSigner(consumerKey, signingKey string) *signer {
+	return &signer{
+		consumerKey: consumerKey,
+		signingKey:  signingKey,
+	}
+}
+
 // GetAuthorizationHeader is a main function which returns OAuth1.0a header
-func GetAuthorizationHeader(uri, method, payload, consumerKey, signingKey string) (string, error) {
+func (s *signer) GetAuthorizationHeader(uri, method, payload string) (string, error) {
 	var err error
 	var queryParams map[string][]string
 	var oauthParams map[string]string
 	var baseURI string
 	var signature string
 
-	queryParams, err = extractQueryParams(uri)
+	queryParams, err = s.extractQueryParams(uri)
 
 	if err != nil {
 		return "", err
 	}
 
-	oauthParams, err = getOAuthParams(consumerKey, payload)
+	oauthParams, err = s.getOAuthParams(payload)
 
 	if err != nil {
 		return "", err
 	}
 
-	paramString := toOAuthParamString(queryParams, oauthParams)
+	paramString := s.toOAuthParamString(queryParams, oauthParams)
 
-	baseURI, err = getBaseURIString(uri)
+	baseURI, err = s.getBaseURIString(uri)
 
 	if err != nil {
 		return "", err
 	}
 
-	sbs := getSignatureBaseString(method, baseURI, paramString)
+	sbs := s.getSignatureBaseString(method, baseURI, paramString)
 
-	signature, err = signSignatureBaseString(sbs, signingKey)
+	signature, err = s.signSignatureBaseString(sbs)
 
 	if err != nil {
 		return "", err
@@ -58,12 +76,12 @@ func GetAuthorizationHeader(uri, method, payload, consumerKey, signingKey string
 
 	oauthParams["oauth_signature"] = encodedSignature
 
-	authorizationString := getAuthorizationString(oauthParams)
+	authorizationString := s.getAuthorizationString(oauthParams)
 
 	return authorizationString, nil
 }
 
-func extractQueryParams(uri string) (map[string][]string, error) {
+func (s *signer) extractQueryParams(uri string) (map[string][]string, error) {
 	queryMap := map[string][]string{}
 
 	parsedURL, err := url.Parse(uri)
@@ -91,27 +109,27 @@ func extractQueryParams(uri string) (map[string][]string, error) {
 	return queryMap, nil
 }
 
-func getOAuthParams(consumerKey, payload string) (map[string]string, error) {
+func (s *signer) getOAuthParams(payload string) (map[string]string, error) {
 	var err error
 	OAuthParams := map[string]string{}
 
-	OAuthParams["oauth_body_hash"] = getBodyHash(payload)
-	OAuthParams["oauth_consumer_key"] = consumerKey
+	OAuthParams["oauth_body_hash"] = s.getBodyHash(payload)
+	OAuthParams["oauth_consumer_key"] = s.consumerKey
 
-	OAuthParams["oauth_nonce"], err = getNonce()
+	OAuthParams["oauth_nonce"], err = s.getNonce()
 
 	if err != nil {
 		return map[string]string{}, err
 	}
 
 	OAuthParams["oauth_signature_method"] = "RSA-SHA256"
-	OAuthParams["oauth_timestamp"] = getTimestamp()
+	OAuthParams["oauth_timestamp"] = s.getTimestamp()
 	OAuthParams["oauth_version"] = "1.0"
 
 	return OAuthParams, nil
 }
 
-func getTimestamp() string {
+func (s *signer) getTimestamp() string {
 	nowUnix := time.Now().Unix()
 
 	timestamp := strconv.Itoa(int(nowUnix))
@@ -120,7 +138,7 @@ func getTimestamp() string {
 }
 
 // getNonce returns securely generated random string.
-func getNonce() (string, error) {
+func (s *signer) getNonce() (string, error) {
 	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	buf, err := generateRandomBytes(nonceLength)
 
@@ -135,13 +153,13 @@ func getNonce() (string, error) {
 	return string(buf), nil
 }
 
-func getBodyHash(payload string) string {
+func (s *signer) getBodyHash(payload string) string {
 	hash := sha256.Sum256([]byte(payload))
 
 	return base64.StdEncoding.EncodeToString(hash[:])
 }
 
-func toOAuthParamString(queryParams map[string][]string, oauthParams map[string]string) string {
+func (s *signer) toOAuthParamString(queryParams map[string][]string, oauthParams map[string]string) string {
 	var paramsBuilder strings.Builder
 	params := ""
 	consolidatedParams := queryParams
@@ -170,7 +188,7 @@ func toOAuthParamString(queryParams map[string][]string, oauthParams map[string]
 	return params
 }
 
-func getBaseURIString(uri string) (string, error) {
+func (s *signer) getBaseURIString(uri string) (string, error) {
 	URL, err := url.Parse(uri)
 
 	if err != nil {
@@ -181,19 +199,19 @@ func getBaseURIString(uri string) (string, error) {
 	return base, nil
 }
 
-func getSignatureBaseString(method, baseURI, params string) string {
+func (s *signer) getSignatureBaseString(method, baseURI, params string) string {
 	sbs := url.QueryEscape(method) + "&" + url.QueryEscape(baseURI) + "&" + url.QueryEscape(params)
 
 	return sbs
 }
 
-func signSignatureBaseString(signatureBaseString, signingKey string) (string, error) {
+func (s *signer) signSignatureBaseString(signatureBaseString string) (string, error) {
 	var Reader io.Reader
 	var err error
 	var privateKey *rsa.PrivateKey
 	var signature []byte
 
-	block, _ := pem.Decode([]byte(signingKey))
+	block, _ := pem.Decode([]byte(s.signingKey))
 
 	privateKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
 
@@ -212,7 +230,7 @@ func signSignatureBaseString(signatureBaseString, signingKey string) (string, er
 	return base64.StdEncoding.EncodeToString(signature), nil
 }
 
-func getAuthorizationString(oauthParams map[string]string) string {
+func (s *signer) getAuthorizationString(oauthParams map[string]string) string {
 	var authorizationBuilder strings.Builder
 
 	authorizationBuilder.WriteString("OAuth ")

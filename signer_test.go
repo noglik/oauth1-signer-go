@@ -7,11 +7,39 @@ import (
 	"testing"
 )
 
+const (
+	consumerKey = "aaa!aaa"
+	signingKey  = "-----BEGIN RSA PRIVATE KEY-----\nMIICWwIBAAKBgQDRhGF7X4A0ZVlEg594WmODVVUIiiPQs04aLmvfg8SborHss5gQ\nXu0aIdUT6nb5rTh5hD2yfpF2WIW6M8z0WxRhwicgXwi80H1aLPf6lEPPLvN29EhQ\nNjBpkFkAJUbS8uuhJEeKw0cE49g80eBBF4BCqSL6PFQbP9/rByxdxEoAIQIDAQAB\nAoGAA9/q3Zk6ib2GFRpKDLO/O2KMnAfR+b4XJ6zMGeoZ7Lbpi3MW0Nawk9ckVaX0\nZVGqxbSIX5Cvp/yjHHpww+QbUFrw/gCjLiiYjM9E8C3uAF5AKJ0r4GBPl4u8K4bp\nbXeSxSB60/wPQFiQAJVcA5xhZVzqNuF3EjuKdHsw+dk+dPECQQDubX/lVGFgD/xY\nuchz56Yc7VHX+58BUkNSewSzwJRbcueqknXRWwj97SXqpnYfKqZq78dnEF10SWsr\n/NMKi+7XAkEA4PVqDv/OZAbWr4syXZNv/Mpl4r5suzYMMUD9U8B2JIRnrhmGZPzL\nx23N9J4hEJ+Xh8tSKVc80jOkrvGlSv+BxwJAaTOtjA3YTV+gU7Hdza53sCnSw/8F\nYLrgc6NOJtYhX9xqdevbyn1lkU0zPr8mPYg/F84m6MXixm2iuSz8HZoyzwJARi2p\naYZ5/5B2lwroqnKdZBJMGKFpUDn7Mb5hiSgocxnvMkv6NjT66Xsi3iYakJII9q8C\nMa1qZvT/cigmdbAh7wJAQNXyoizuGEltiSaBXx4H29EdXNYWDJ9SS5f070BRbAIl\ndqRh3rcNvpY6BKJqFapda1DjdcncZECMizT/GMrc1w==\n-----END RSA PRIVATE KEY-----\n"
+	nonce       = "uTeLPs6K"
+	timestamp   = "1524771555"
+)
+
+type MockSigner struct {
+	signer
+}
+
+func NewMockSigner(consumerKey, signingKey string) *MockSigner {
+	return &MockSigner{
+		signer{
+			consumerKey: consumerKey,
+			signingKey:  signingKey,
+		},
+	}
+}
+
+func (m *MockSigner) getNonce() (string, error) {
+	return nonce, nil
+}
+
+func (m *MockSigner) getTimestamp() string {
+	return timestamp
+}
+
 func TestGetAuthorizationHeader(t *testing.T) {
 	uri := "HTTPS://SANDBOX.api.mastercard.com/merchantid/v1/merchantid?MerchantId=GOOGLE%20LTD%20ADWORDS%20%28CC%40GOOGLE.COM%29&Type=ExactMatch&Format=JSON"
 	method := "GET"
-	consumerKey := "aaa!aaa"
-	signingKey := "-----BEGIN RSA PRIVATE KEY-----\nMIICWwIBAAKBgQDRhGF7X4A0ZVlEg594WmODVVUIiiPQs04aLmvfg8SborHss5gQ\nXu0aIdUT6nb5rTh5hD2yfpF2WIW6M8z0WxRhwicgXwi80H1aLPf6lEPPLvN29EhQ\nNjBpkFkAJUbS8uuhJEeKw0cE49g80eBBF4BCqSL6PFQbP9/rByxdxEoAIQIDAQAB\nAoGAA9/q3Zk6ib2GFRpKDLO/O2KMnAfR+b4XJ6zMGeoZ7Lbpi3MW0Nawk9ckVaX0\nZVGqxbSIX5Cvp/yjHHpww+QbUFrw/gCjLiiYjM9E8C3uAF5AKJ0r4GBPl4u8K4bp\nbXeSxSB60/wPQFiQAJVcA5xhZVzqNuF3EjuKdHsw+dk+dPECQQDubX/lVGFgD/xY\nuchz56Yc7VHX+58BUkNSewSzwJRbcueqknXRWwj97SXqpnYfKqZq78dnEF10SWsr\n/NMKi+7XAkEA4PVqDv/OZAbWr4syXZNv/Mpl4r5suzYMMUD9U8B2JIRnrhmGZPzL\nx23N9J4hEJ+Xh8tSKVc80jOkrvGlSv+BxwJAaTOtjA3YTV+gU7Hdza53sCnSw/8F\nYLrgc6NOJtYhX9xqdevbyn1lkU0zPr8mPYg/F84m6MXixm2iuSz8HZoyzwJARi2p\naYZ5/5B2lwroqnKdZBJMGKFpUDn7Mb5hiSgocxnvMkv6NjT66Xsi3iYakJII9q8C\nMa1qZvT/cigmdbAh7wJAQNXyoizuGEltiSaBXx4H29EdXNYWDJ9SS5f070BRbAIl\ndqRh3rcNvpY6BKJqFapda1DjdcncZECMizT/GMrc1w==\n-----END RSA PRIVATE KEY-----\n"
+
+	m := NewMockSigner(consumerKey, signingKey)
 
 	testCases := []struct {
 		name string
@@ -35,7 +63,7 @@ func TestGetAuthorizationHeader(t *testing.T) {
 		t.Run(tC.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := GetAuthorizationHeader(uri, method, tC.body, consumerKey, signingKey)
+			got, err := m.GetAuthorizationHeader(uri, method, tC.body)
 
 			if err != nil {
 				t.Error(err)
@@ -49,6 +77,8 @@ func TestGetAuthorizationHeader(t *testing.T) {
 }
 
 func TestExtractQueryParams(t *testing.T) {
+	m := NewMockSigner(consumerKey, signingKey)
+
 	testCases := []struct {
 		name string
 		uri  string
@@ -103,7 +133,7 @@ func TestExtractQueryParams(t *testing.T) {
 		tC := tC
 		t.Run(tC.name, func(t *testing.T) {
 			t.Parallel()
-			got, err := extractQueryParams(tC.uri)
+			got, err := m.extractQueryParams(tC.uri)
 
 			if err != nil {
 				t.Error(err)
@@ -117,44 +147,34 @@ func TestExtractQueryParams(t *testing.T) {
 }
 
 func TestGetOAuthParams(t *testing.T) {
-	commonConsumerKey := "aaa!aaa"
-	keys := []string{
-		"oauth_body_hash",
-		"oauth_consumer_key",
-		"oauth_nonce",
-		"oauth_signature_method",
-		"oauth_timestamp",
-		"oauth_version",
-	}
+	m := NewMockSigner(consumerKey, signingKey)
 
 	testCases := []struct {
-		name        string
-		consumerKey string
-		payload     string
-		keys        []string
-		want        map[string]string
+		name    string
+		payload string
+		want    map[string]string
 	}{
 		{
-			name:        "Without payload",
-			consumerKey: commonConsumerKey,
-			payload:     "",
-			keys:        keys,
+			name:    "Without payload",
+			payload: "",
 			want: map[string]string{
 				"oauth_body_hash":        "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
-				"oauth_consumer_key":     commonConsumerKey,
+				"oauth_consumer_key":     consumerKey,
+				"oauth_nonce":            nonce,
 				"oauth_signature_method": "RSA-SHA256",
+				"oauth_timestamp":        timestamp,
 				"oauth_version":          "1.0",
 			},
 		},
 		{
-			name:        "Without payload",
-			consumerKey: commonConsumerKey,
-			payload:     `{ my: "payload" }`,
-			keys:        keys,
+			name:    "Without payload",
+			payload: `{ my: "payload" }`,
 			want: map[string]string{
 				"oauth_body_hash":        "Qm/nLCqwlog0uoCDvypgninzNQ25YHgTmUDl/zOgT1s=",
-				"oauth_consumer_key":     commonConsumerKey,
+				"oauth_consumer_key":     consumerKey,
+				"oauth_nonce":            nonce,
 				"oauth_signature_method": "RSA-SHA256",
+				"oauth_timestamp":        timestamp,
 				"oauth_version":          "1.0",
 			},
 		},
@@ -166,27 +186,23 @@ func TestGetOAuthParams(t *testing.T) {
 		t.Run(tC.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := getOAuthParams(tC.consumerKey, tC.payload)
+			got, err := m.getOAuthParams(tC.payload)
 
 			if err != nil {
 				t.Error(err)
 			}
 
-			for _, k := range tC.keys {
-				if _, ok := got[k]; !ok {
-					t.Errorf("\ngot '%v'\nwant with key '%v'", got, k)
-				} else if _, ok := tC.want[k]; ok {
-					if got[k] != tC.want[k] {
-						t.Errorf("\ngot '%v'\nwant '%v'", got[k], tC.want[k])
-					}
-				}
+			if !reflect.DeepEqual(got, tC.want) {
+				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
 			}
 		})
 	}
 }
 
 func TestGetTimestamp(t *testing.T) {
-	got := getTimestamp()
+	s := NewSigner(consumerKey, signingKey)
+
+	got := s.getTimestamp()
 
 	gotNumber, err := strconv.Atoi(got)
 
@@ -200,6 +216,8 @@ func TestGetTimestamp(t *testing.T) {
 }
 
 func TestGetNonce(t *testing.T) {
+	s := NewSigner(consumerKey, signingKey)
+
 	regexpString := "^[a-zA-Z0-9]+$"
 	r, err := regexp.Compile(regexpString)
 
@@ -207,7 +225,7 @@ func TestGetNonce(t *testing.T) {
 		t.Error(err)
 	}
 
-	got, err := getNonce()
+	got, err := s.getNonce()
 
 	if err != nil {
 		t.Error(err)
@@ -225,6 +243,8 @@ func TestGetNonce(t *testing.T) {
 }
 
 func TestGetBodyHash(t *testing.T) {
+	m := NewMockSigner(consumerKey, signingKey)
+
 	testCases := []struct {
 		name    string
 		payload string
@@ -248,7 +268,7 @@ func TestGetBodyHash(t *testing.T) {
 		t.Run(tC.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := getBodyHash(tC.payload)
+			got := m.getBodyHash(tC.payload)
 
 			if got != tC.want {
 				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
@@ -258,6 +278,8 @@ func TestGetBodyHash(t *testing.T) {
 }
 
 func TestToOAuthParamString(t *testing.T) {
+	m := NewMockSigner(consumerKey, signingKey)
+
 	testCases := []struct {
 		name        string
 		queryParams map[string][]string
@@ -302,7 +324,7 @@ func TestToOAuthParamString(t *testing.T) {
 		t.Run(tC.name, func(t *testing.T) {
 			// t.Parallel()
 
-			got := toOAuthParamString(tC.queryParams, tC.oauthParams)
+			got := m.toOAuthParamString(tC.queryParams, tC.oauthParams)
 
 			if got != tC.want {
 				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
@@ -312,6 +334,8 @@ func TestToOAuthParamString(t *testing.T) {
 }
 
 func TestGetBaseURIString(t *testing.T) {
+	m := NewMockSigner(consumerKey, signingKey)
+
 	testCases := []struct {
 		name string
 		uri  string
@@ -340,7 +364,7 @@ func TestGetBaseURIString(t *testing.T) {
 		t.Run(tC.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := getBaseURIString(tC.uri)
+			got, err := m.getBaseURIString(tC.uri)
 
 			if err != nil {
 				t.Error(err)
@@ -354,6 +378,8 @@ func TestGetBaseURIString(t *testing.T) {
 }
 
 func TestGetSignatureBaseString(t *testing.T) {
+	m := NewMockSigner(consumerKey, signingKey)
+
 	testCases := []struct {
 		name    string
 		method  string
@@ -376,7 +402,7 @@ func TestGetSignatureBaseString(t *testing.T) {
 		t.Run(tC.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := getSignatureBaseString(tC.method, tC.baseURI, tC.params)
+			got := m.getSignatureBaseString(tC.method, tC.baseURI, tC.params)
 
 			if got != tC.want {
 				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
@@ -386,6 +412,8 @@ func TestGetSignatureBaseString(t *testing.T) {
 }
 
 func TestSignSignatureBaseString(t *testing.T) {
+	m := NewMockSigner(consumerKey, signingKey)
+
 	testCases := []struct {
 		name                string
 		signatureBaseString string
@@ -406,7 +434,7 @@ func TestSignSignatureBaseString(t *testing.T) {
 		t.Run(tC.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := signSignatureBaseString(tC.signatureBaseString, tC.signingKey)
+			got, err := m.signSignatureBaseString(tC.signatureBaseString)
 
 			if err != nil {
 				t.Error(err)
@@ -420,6 +448,8 @@ func TestSignSignatureBaseString(t *testing.T) {
 }
 
 func TestGetAuthorizationString(t *testing.T) {
+	m := NewMockSigner(consumerKey, signingKey)
+
 	testCases := []struct {
 		name        string
 		oauthParams map[string]string
@@ -446,7 +476,7 @@ func TestGetAuthorizationString(t *testing.T) {
 		t.Run(tC.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := getAuthorizationString(tC.oauthParams)
+			got := m.getAuthorizationString(tC.oauthParams)
 
 			if got != tC.want {
 				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
