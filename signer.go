@@ -114,11 +114,7 @@ func toOAuthParamString(queryParams map[string][]string, oauthParams map[string]
 		}
 	}
 
-	keys := make([]string, len(consolidatedParams))
-	for k := range consolidatedParams {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
+	keys := getSortedKeys(consolidatedParams)
 
 	for _, k := range keys {
 		sort.Strings(consolidatedParams[k])
@@ -174,6 +170,47 @@ func signSignatureBaseString(signatureBaseString, signingKey string) (string, er
 	}
 
 	return base64.StdEncoding.EncodeToString(signature), nil
+}
+
+func getAuthorizationString(oauthParams map[string]string) string {
+	var authorizationBuilder strings.Builder
+
+	authorizationBuilder.WriteString("OAuth ")
+
+	keys := getSortedKeys(oauthParams)
+
+	for _, k := range keys {
+		authorizationBuilder.WriteString(k + `="` + oauthParams[k] + `",`)
+	}
+
+	authorizationString := strings.TrimSuffix(authorizationBuilder.String(), ",")
+
+	return authorizationString
+}
+
+func getSortedKeys(m interface{}) []string {
+	var keys []string
+	var i int
+
+	switch t := m.(type) {
+	case map[string]string:
+		keys = make([]string, len(t))
+
+		for k := range t {
+			keys[i] = k
+			i++
+		}
+	case map[string][]string:
+		keys = make([]string, len(t))
+
+		for k := range t {
+			keys[i] = k
+			i++
+		}
+	}
+
+	sort.Strings(keys)
+	return keys
 }
 
 // generateRandomBytes returns array filled with securely generated random bytes of given length

@@ -419,6 +419,42 @@ func TestSignSignatureBaseString(t *testing.T) {
 	}
 }
 
+func TestGetAuthorizationString(t *testing.T) {
+	testCases := []struct {
+		name        string
+		oauthParams map[string]string
+		want        string
+	}{
+		{
+			name: "Simple",
+			oauthParams: map[string]string{
+				"oauth_body_hash":        "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
+				"oauth_consumer_key":     "aaa!aaa",
+				"oauth_nonce":            "oauth_nonce",
+				"oauth_signature":        "Q%2FAnafnIfOC67BsVkQl9dQlRJeOzfSFUi6YugxLhAXasNyyAmZiXPkU5r8zZnuCg2NE8sqG9Jj0zMTY%2FvFbxhSQOaZs0ogpcJUE0CvWuMVzmgY%2FDxv5XfjdZMfXVItkFkoaAs2GRryNd4fb26UekyX3JTHZpY%2BHJdUFjwrDM3q0%3D",
+				"oauth_signature_method": "RSA-SHA256",
+				"oauth_timestamp":        "oauth_timestamp",
+				"oauth_version":          "1.0",
+			},
+			want: `OAuth oauth_body_hash="47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",oauth_consumer_key="aaa!aaa",oauth_nonce="oauth_nonce",oauth_signature="Q%2FAnafnIfOC67BsVkQl9dQlRJeOzfSFUi6YugxLhAXasNyyAmZiXPkU5r8zZnuCg2NE8sqG9Jj0zMTY%2FvFbxhSQOaZs0ogpcJUE0CvWuMVzmgY%2FDxv5XfjdZMfXVItkFkoaAs2GRryNd4fb26UekyX3JTHZpY%2BHJdUFjwrDM3q0%3D",oauth_signature_method="RSA-SHA256",oauth_timestamp="oauth_timestamp",oauth_version="1.0"`,
+		},
+	}
+
+	for _, tC := range testCases {
+		tC := tC
+
+		t.Run(tC.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := getAuthorizationString(tC.oauthParams)
+
+			if got != tC.want {
+				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
+			}
+		})
+	}
+}
+
 func TestContains(t *testing.T) {
 	array := []string{"Brad", "John", "Anna"}
 
@@ -486,6 +522,59 @@ func TestGenerateRandomBytes(t *testing.T) {
 
 			if len(got) != tC.length {
 				t.Errorf("got length %v, want %v", len(got), tC.length)
+			}
+		})
+	}
+}
+
+func TestGetSortedKeys(t *testing.T) {
+	testCases := []struct {
+		name string
+		m    interface{}
+		want []string
+	}{
+		{
+			name: "Map of strings",
+			m: map[string]string{
+				"oauth_nonce":     "",
+				"oauth_body_hash": "",
+				"oauth_timestamp": "",
+				"oauth_signature": "",
+			},
+			want: []string{
+				"oauth_body_hash",
+				"oauth_nonce",
+				"oauth_signature",
+				"oauth_timestamp",
+			},
+		},
+		{
+			name: "Map of arrays",
+			m: map[string][]string{
+				"oauth_nonce":     []string{},
+				"oauth_body_hash": []string{},
+				"oauth_timestamp": []string{},
+				"oauth_signature": []string{},
+			},
+			want: []string{
+				"oauth_body_hash",
+				"oauth_nonce",
+				"oauth_signature",
+				"oauth_timestamp",
+			},
+		},
+	}
+
+	for _, tC := range testCases {
+		tC := tC
+
+		t.Run(tC.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := getSortedKeys(tC.m)
+
+			if !reflect.DeepEqual(got, tC.want) {
+				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
 			}
 		})
 	}
