@@ -20,7 +20,47 @@ const nonceLength = 8
 
 // GetAuthorizationHeader is a main function which returns OAuth1.0a header
 func GetAuthorizationHeader(uri, method, payload, consumerKey, signingKey string) (string, error) {
-	return "", nil
+	var err error
+	var queryParams map[string][]string
+	var oauthParams map[string]string
+	var baseURI string
+	var signature string
+
+	queryParams, err = extractQueryParams(uri)
+
+	if err != nil {
+		return "", err
+	}
+
+	oauthParams, err = getOAuthParams(consumerKey, payload)
+
+	if err != nil {
+		return "", err
+	}
+
+	paramString := toOAuthParamString(queryParams, oauthParams)
+
+	baseURI, err = getBaseURIString(uri)
+
+	if err != nil {
+		return "", err
+	}
+
+	sbs := getSignatureBaseString(method, baseURI, paramString)
+
+	signature, err = signSignatureBaseString(sbs, signingKey)
+
+	if err != nil {
+		return "", err
+	}
+
+	encodedSignature := url.QueryEscape(signature)
+
+	oauthParams["oauth_signature"] = encodedSignature
+
+	authorizationString := getAuthorizationString(oauthParams)
+
+	return authorizationString, nil
 }
 
 func extractQueryParams(uri string) (map[string][]string, error) {
