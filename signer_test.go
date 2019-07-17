@@ -8,11 +8,14 @@ import (
 	"testing"
 )
 
+const (
+	consumerKey = "aaa!aaa"
+	signingKey  = "-----BEGIN RSA PRIVATE KEY-----\nMIICWwIBAAKBgQDRhGF7X4A0ZVlEg594WmODVVUIiiPQs04aLmvfg8SborHss5gQ\nXu0aIdUT6nb5rTh5hD2yfpF2WIW6M8z0WxRhwicgXwi80H1aLPf6lEPPLvN29EhQ\nNjBpkFkAJUbS8uuhJEeKw0cE49g80eBBF4BCqSL6PFQbP9/rByxdxEoAIQIDAQAB\nAoGAA9/q3Zk6ib2GFRpKDLO/O2KMnAfR+b4XJ6zMGeoZ7Lbpi3MW0Nawk9ckVaX0\nZVGqxbSIX5Cvp/yjHHpww+QbUFrw/gCjLiiYjM9E8C3uAF5AKJ0r4GBPl4u8K4bp\nbXeSxSB60/wPQFiQAJVcA5xhZVzqNuF3EjuKdHsw+dk+dPECQQDubX/lVGFgD/xY\nuchz56Yc7VHX+58BUkNSewSzwJRbcueqknXRWwj97SXqpnYfKqZq78dnEF10SWsr\n/NMKi+7XAkEA4PVqDv/OZAbWr4syXZNv/Mpl4r5suzYMMUD9U8B2JIRnrhmGZPzL\nx23N9J4hEJ+Xh8tSKVc80jOkrvGlSv+BxwJAaTOtjA3YTV+gU7Hdza53sCnSw/8F\nYLrgc6NOJtYhX9xqdevbyn1lkU0zPr8mPYg/F84m6MXixm2iuSz8HZoyzwJARi2p\naYZ5/5B2lwroqnKdZBJMGKFpUDn7Mb5hiSgocxnvMkv6NjT66Xsi3iYakJII9q8C\nMa1qZvT/cigmdbAh7wJAQNXyoizuGEltiSaBXx4H29EdXNYWDJ9SS5f070BRbAIl\ndqRh3rcNvpY6BKJqFapda1DjdcncZECMizT/GMrc1w==\n-----END RSA PRIVATE KEY-----\n"
+)
+
 func TestGetAuthorizationHeader(t *testing.T) {
 	uri := "HTTPS://SANDBOX.api.mastercard.com/merchantid/v1/merchantid?MerchantId=GOOGLE%20LTD%20ADWORDS%20%28CC%40GOOGLE.COM%29&Type=ExactMatch&Format=JSON"
 	method := "GET"
-	consumerKey := "aaa!aaa"
-	signingKey := "-----BEGIN RSA PRIVATE KEY-----\nMIICWwIBAAKBgQDRhGF7X4A0ZVlEg594WmODVVUIiiPQs04aLmvfg8SborHss5gQ\nXu0aIdUT6nb5rTh5hD2yfpF2WIW6M8z0WxRhwicgXwi80H1aLPf6lEPPLvN29EhQ\nNjBpkFkAJUbS8uuhJEeKw0cE49g80eBBF4BCqSL6PFQbP9/rByxdxEoAIQIDAQAB\nAoGAA9/q3Zk6ib2GFRpKDLO/O2KMnAfR+b4XJ6zMGeoZ7Lbpi3MW0Nawk9ckVaX0\nZVGqxbSIX5Cvp/yjHHpww+QbUFrw/gCjLiiYjM9E8C3uAF5AKJ0r4GBPl4u8K4bp\nbXeSxSB60/wPQFiQAJVcA5xhZVzqNuF3EjuKdHsw+dk+dPECQQDubX/lVGFgD/xY\nuchz56Yc7VHX+58BUkNSewSzwJRbcueqknXRWwj97SXqpnYfKqZq78dnEF10SWsr\n/NMKi+7XAkEA4PVqDv/OZAbWr4syXZNv/Mpl4r5suzYMMUD9U8B2JIRnrhmGZPzL\nx23N9J4hEJ+Xh8tSKVc80jOkrvGlSv+BxwJAaTOtjA3YTV+gU7Hdza53sCnSw/8F\nYLrgc6NOJtYhX9xqdevbyn1lkU0zPr8mPYg/F84m6MXixm2iuSz8HZoyzwJARi2p\naYZ5/5B2lwroqnKdZBJMGKFpUDn7Mb5hiSgocxnvMkv6NjT66Xsi3iYakJII9q8C\nMa1qZvT/cigmdbAh7wJAQNXyoizuGEltiSaBXx4H29EdXNYWDJ9SS5f070BRbAIl\ndqRh3rcNvpY6BKJqFapda1DjdcncZECMizT/GMrc1w==\n-----END RSA PRIVATE KEY-----\n"
 
 	testCases := []struct {
 		name     string
@@ -66,6 +69,15 @@ func TestGetAuthorizationHeader(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func BenchmarkGetAuthorizationHeader(b *testing.B) {
+	uri := "HTTPS://SANDBOX.api.mastercard.com/merchantid/v1/merchantid?MerchantId=GOOGLE%20LTD%20ADWORDS%20%28CC%40GOOGLE.COM%29&Type=ExactMatch&Format=JSON"
+	method := "GET"
+
+	for i := 0; i < b.N; i++ {
+		GetAuthorizationHeader(uri, method, "", consumerKey, signingKey)
 	}
 }
 
@@ -138,7 +150,6 @@ func TestExtractQueryParams(t *testing.T) {
 }
 
 func TestGetOAuthParams(t *testing.T) {
-	commonConsumerKey := "aaa!aaa"
 	keys := []string{
 		"oauth_body_hash",
 		"oauth_consumer_key",
@@ -149,32 +160,29 @@ func TestGetOAuthParams(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name        string
-		consumerKey string
-		payload     string
-		keys        []string
-		want        map[string]string
+		name    string
+		payload string
+		keys    []string
+		want    map[string]string
 	}{
 		{
-			name:        "Without payload",
-			consumerKey: commonConsumerKey,
-			payload:     "",
-			keys:        keys,
+			name:    "Without payload",
+			payload: "",
+			keys:    keys,
 			want: map[string]string{
 				"oauth_body_hash":        "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
-				"oauth_consumer_key":     commonConsumerKey,
+				"oauth_consumer_key":     consumerKey,
 				"oauth_signature_method": "RSA-SHA256",
 				"oauth_version":          "1.0",
 			},
 		},
 		{
-			name:        "Without payload",
-			consumerKey: commonConsumerKey,
-			payload:     `{ my: "payload" }`,
-			keys:        keys,
+			name:    "Without payload",
+			payload: `{ my: "payload" }`,
+			keys:    keys,
 			want: map[string]string{
 				"oauth_body_hash":        "Qm/nLCqwlog0uoCDvypgninzNQ25YHgTmUDl/zOgT1s=",
-				"oauth_consumer_key":     commonConsumerKey,
+				"oauth_consumer_key":     consumerKey,
 				"oauth_signature_method": "RSA-SHA256",
 				"oauth_version":          "1.0",
 			},
@@ -187,7 +195,7 @@ func TestGetOAuthParams(t *testing.T) {
 		t.Run(tC.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := getOAuthParams(tC.consumerKey, tC.payload)
+			got, err := getOAuthParams(consumerKey, tC.payload)
 
 			if err != nil {
 				t.Error(err)
@@ -410,13 +418,11 @@ func TestSignSignatureBaseString(t *testing.T) {
 	testCases := []struct {
 		name                string
 		signatureBaseString string
-		signingKey          string
 		want                string
 	}{
 		{
 			name:                "Simple",
 			signatureBaseString: "GET&https%3A%2F%2Fsandbox.api.mastercard.com%2Fmerchantid%2Fv1%2Fmerchantid&Format%3DJSON%26Format%3DXML%26MerchantId%3DGOOGLE%2520LTD%2520ADWORDS%2520CC%2540GOOGLE.COM%26Type%3DExactMatch%26oauth_consumer_key%3Daaa%21aaa%26oauth_nonce%3DuTeLPs6K%26oauth_signature_method%3DRSA-SHA256%26oauth_timestamp%3D1524771555%26oauth_version%3D1.0",
-			signingKey:          "-----BEGIN RSA PRIVATE KEY-----\nMIICWwIBAAKBgQDRhGF7X4A0ZVlEg594WmODVVUIiiPQs04aLmvfg8SborHss5gQ\nXu0aIdUT6nb5rTh5hD2yfpF2WIW6M8z0WxRhwicgXwi80H1aLPf6lEPPLvN29EhQ\nNjBpkFkAJUbS8uuhJEeKw0cE49g80eBBF4BCqSL6PFQbP9/rByxdxEoAIQIDAQAB\nAoGAA9/q3Zk6ib2GFRpKDLO/O2KMnAfR+b4XJ6zMGeoZ7Lbpi3MW0Nawk9ckVaX0\nZVGqxbSIX5Cvp/yjHHpww+QbUFrw/gCjLiiYjM9E8C3uAF5AKJ0r4GBPl4u8K4bp\nbXeSxSB60/wPQFiQAJVcA5xhZVzqNuF3EjuKdHsw+dk+dPECQQDubX/lVGFgD/xY\nuchz56Yc7VHX+58BUkNSewSzwJRbcueqknXRWwj97SXqpnYfKqZq78dnEF10SWsr\n/NMKi+7XAkEA4PVqDv/OZAbWr4syXZNv/Mpl4r5suzYMMUD9U8B2JIRnrhmGZPzL\nx23N9J4hEJ+Xh8tSKVc80jOkrvGlSv+BxwJAaTOtjA3YTV+gU7Hdza53sCnSw/8F\nYLrgc6NOJtYhX9xqdevbyn1lkU0zPr8mPYg/F84m6MXixm2iuSz8HZoyzwJARi2p\naYZ5/5B2lwroqnKdZBJMGKFpUDn7Mb5hiSgocxnvMkv6NjT66Xsi3iYakJII9q8C\nMa1qZvT/cigmdbAh7wJAQNXyoizuGEltiSaBXx4H29EdXNYWDJ9SS5f070BRbAIl\ndqRh3rcNvpY6BKJqFapda1DjdcncZECMizT/GMrc1w==\n-----END RSA PRIVATE KEY-----\n",
 			want:                "Q/AnafnIfOC67BsVkQl9dQlRJeOzfSFUi6YugxLhAXasNyyAmZiXPkU5r8zZnuCg2NE8sqG9Jj0zMTY/vFbxhSQOaZs0ogpcJUE0CvWuMVzmgY/Dxv5XfjdZMfXVItkFkoaAs2GRryNd4fb26UekyX3JTHZpY+HJdUFjwrDM3q0=",
 		},
 	}
@@ -427,7 +433,7 @@ func TestSignSignatureBaseString(t *testing.T) {
 		t.Run(tC.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := signSignatureBaseString(tC.signatureBaseString, tC.signingKey)
+			got, err := signSignatureBaseString(tC.signatureBaseString, signingKey)
 
 			if err != nil {
 				t.Error(err)
