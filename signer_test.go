@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -14,19 +15,37 @@ func TestGetAuthorizationHeader(t *testing.T) {
 	signingKey := "-----BEGIN RSA PRIVATE KEY-----\nMIICWwIBAAKBgQDRhGF7X4A0ZVlEg594WmODVVUIiiPQs04aLmvfg8SborHss5gQ\nXu0aIdUT6nb5rTh5hD2yfpF2WIW6M8z0WxRhwicgXwi80H1aLPf6lEPPLvN29EhQ\nNjBpkFkAJUbS8uuhJEeKw0cE49g80eBBF4BCqSL6PFQbP9/rByxdxEoAIQIDAQAB\nAoGAA9/q3Zk6ib2GFRpKDLO/O2KMnAfR+b4XJ6zMGeoZ7Lbpi3MW0Nawk9ckVaX0\nZVGqxbSIX5Cvp/yjHHpww+QbUFrw/gCjLiiYjM9E8C3uAF5AKJ0r4GBPl4u8K4bp\nbXeSxSB60/wPQFiQAJVcA5xhZVzqNuF3EjuKdHsw+dk+dPECQQDubX/lVGFgD/xY\nuchz56Yc7VHX+58BUkNSewSzwJRbcueqknXRWwj97SXqpnYfKqZq78dnEF10SWsr\n/NMKi+7XAkEA4PVqDv/OZAbWr4syXZNv/Mpl4r5suzYMMUD9U8B2JIRnrhmGZPzL\nx23N9J4hEJ+Xh8tSKVc80jOkrvGlSv+BxwJAaTOtjA3YTV+gU7Hdza53sCnSw/8F\nYLrgc6NOJtYhX9xqdevbyn1lkU0zPr8mPYg/F84m6MXixm2iuSz8HZoyzwJARi2p\naYZ5/5B2lwroqnKdZBJMGKFpUDn7Mb5hiSgocxnvMkv6NjT66Xsi3iYakJII9q8C\nMa1qZvT/cigmdbAh7wJAQNXyoizuGEltiSaBXx4H29EdXNYWDJ9SS5f070BRbAIl\ndqRh3rcNvpY6BKJqFapda1DjdcncZECMizT/GMrc1w==\n-----END RSA PRIVATE KEY-----\n"
 
 	testCases := []struct {
-		name string
-		body string
-		want string
+		name     string
+		body     string
+		contains []string
 	}{
 		{
 			name: "Empty body",
 			body: "",
-			want: `OAuth oauth_body_hash="47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",oauth_consumer_key="aaa!aaa",oauth_nonce="uTeLPs6K",oauth_signature_method="RSA-SHA256",oauth_timestamp="1524771555",oauth_version="1.0",oauth_signature="RSA_SIGNATURE"`,
+			contains: []string{
+				"OAuth ",
+				`oauth_body_hash="47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU="`,
+				`oauth_consumer_key="` + consumerKey + `"`,
+				`oauth_signature_method="RSA-SHA256"`,
+				`oauth_version="1.0"`,
+				`oauth_signature`,
+				`oauth_nonce`,
+				`oauth_timestamp`,
+			},
 		},
 		{
 			name: "Empty json object",
 			body: "{}",
-			want: `OAuth oauth_body_hash="RBNvo1WzZ4oRRq0W9+hknpT7T8If536DEMBg9hyq/4o=",oauth_consumer_key="aaa!aaa",oauth_nonce="uTeLPs6K",oauth_signature_method="RSA-SHA256",oauth_timestamp="1524771555",oauth_version="1.0",oauth_signature="RSA_SIGNATURE"`,
+			contains: []string{
+				"OAuth ",
+				`oauth_body_hash="RBNvo1WzZ4oRRq0W9+hknpT7T8If536DEMBg9hyq/4o="`,
+				`oauth_consumer_key="` + consumerKey + `"`,
+				`oauth_signature_method="RSA-SHA256"`,
+				`oauth_version="1.0"`,
+				`oauth_signature`,
+				`oauth_nonce`,
+				`oauth_timestamp`,
+			},
 		},
 	}
 
@@ -41,8 +60,10 @@ func TestGetAuthorizationHeader(t *testing.T) {
 				t.Error(err)
 			}
 
-			if got != tC.want {
-				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
+			for _, v := range tC.contains {
+				if !strings.Contains(got, v) {
+					t.Errorf("\ngot '%v'\nshould contain '%v'", got, v)
+				}
 			}
 		})
 	}
@@ -300,7 +321,7 @@ func TestToOAuthParamString(t *testing.T) {
 		tC := tC
 
 		t.Run(tC.name, func(t *testing.T) {
-			// t.Parallel()
+			t.Parallel()
 
 			got := toOAuthParamString(tC.queryParams, tC.oauthParams)
 
