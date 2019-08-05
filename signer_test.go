@@ -72,13 +72,19 @@ func TestGetAuthorizationHeader(t *testing.T) {
 	}
 }
 
+var result string
+
 func BenchmarkGetAuthorizationHeader(b *testing.B) {
 	uri := "HTTPS://SANDBOX.api.mastercard.com/merchantid/v1/merchantid?MerchantId=GOOGLE%20LTD%20ADWORDS%20%28CC%40GOOGLE.COM%29&Type=ExactMatch&Format=JSON"
 	method := "GET"
 
+	var r string
+
 	for i := 0; i < b.N; i++ {
-		GetAuthorizationHeader(uri, method, "", consumerKey, signingKey)
+		r, _ = GetAuthorizationHeader(uri, method, "", consumerKey, signingKey)
 	}
+
+	result = r
 }
 
 func TestExtractQueryParams(t *testing.T) {
@@ -205,9 +211,7 @@ func TestGetOAuthParams(t *testing.T) {
 				if _, ok := got[k]; !ok {
 					t.Errorf("\ngot '%v'\nwant with key '%v'", got, k)
 				} else if _, ok := tC.want[k]; ok {
-					if got[k] != tC.want[k] {
-						t.Errorf("\ngot '%v'\nwant '%v'", got[k], tC.want[k])
-					}
+					assertResponseEquality(t, got[k], tC.want[k])
 				}
 			}
 		})
@@ -279,9 +283,7 @@ func TestGetBodyHash(t *testing.T) {
 
 			got := getBodyHash(tC.payload)
 
-			if got != tC.want {
-				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
-			}
+			assertResponseEquality(t, got, tC.want)
 		})
 	}
 }
@@ -333,10 +335,29 @@ func TestToOAuthParamString(t *testing.T) {
 
 			got := toOAuthParamString(tC.queryParams, tC.oauthParams)
 
-			if got != tC.want {
-				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
-			}
+			assertResponseEquality(t, got, tC.want)
 		})
+	}
+}
+
+func BenchmarkToOAuthParamString(b *testing.B) {
+	oauthParams := map[string]string{
+		"oauth_consumer_key":     "9djdj82h48djs9d2",
+		"oauth_token":            "kkk9d7dh3k39sjv7",
+		"oauth_signature_method": "HMAC-SHA1",
+		"oauth_timestamp":        "137131201",
+		"oauth_nonce":            "7d8f3e4a",
+	}
+	queryParams := map[string][]string{
+		"b5":   []string{"%3D%253D"},
+		"a3":   []string{"a", "2%20q"},
+		"c%40": []string{""},
+		"a2":   []string{"r%20b"},
+		"c2":   []string{""},
+	}
+
+	for i := 0; i < b.N; i++ {
+		toOAuthParamString(queryParams, oauthParams)
 	}
 }
 
@@ -375,9 +396,7 @@ func TestGetBaseURIString(t *testing.T) {
 				t.Error(err)
 			}
 
-			if got != tC.want {
-				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
-			}
+			assertResponseEquality(t, got, tC.want)
 		})
 	}
 }
@@ -407,9 +426,7 @@ func TestGetSignatureBaseString(t *testing.T) {
 
 			got := getSignatureBaseString(tC.method, tC.baseURI, tC.params)
 
-			if got != tC.want {
-				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
-			}
+			assertResponseEquality(t, got, tC.want)
 		})
 	}
 }
@@ -439,9 +456,7 @@ func TestSignSignatureBaseString(t *testing.T) {
 				t.Error(err)
 			}
 
-			if got != tC.want {
-				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
-			}
+			assertResponseEquality(t, got, tC.want)
 		})
 	}
 }
@@ -475,9 +490,7 @@ func TestGetAuthorizationString(t *testing.T) {
 
 			got := getAuthorizationString(tC.oauthParams)
 
-			if got != tC.want {
-				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
-			}
+			assertResponseEquality(t, got, tC.want)
 		})
 	}
 }
@@ -513,10 +526,15 @@ func TestContains(t *testing.T) {
 
 			got := contains(tC.array, tC.element)
 
-			if got != tC.want {
-				t.Errorf("\ngot '%v'\nwant'%v'", got, tC.want)
-			}
+			assertResponseEquality(t, got, tC.want)
 		})
+	}
+}
+
+func BenchmarkContains(b *testing.B) {
+	s := []string{"Brad", "John", "Anna"}
+	for i := 0; i < b.N; i++ {
+		contains(s, "John")
 	}
 }
 
@@ -604,5 +622,13 @@ func TestGetSortedKeys(t *testing.T) {
 				t.Errorf("\ngot '%v'\nwant '%v'", got, tC.want)
 			}
 		})
+	}
+}
+
+func assertResponseEquality(t *testing.T, got, want interface{}) {
+	t.Helper()
+
+	if got != want {
+		t.Errorf("\ngot '%v'\nwant '%v'", got, want)
 	}
 }

@@ -143,31 +143,26 @@ func getBodyHash(payload string) string {
 
 func toOAuthParamString(queryParams map[string][]string, oauthParams map[string]string) string {
 	var paramsBuilder strings.Builder
-	params := ""
-	consolidatedParams := queryParams
 
 	for k, v := range oauthParams {
-		if _, ok := consolidatedParams[k]; ok {
-			consolidatedParams[k] = append(consolidatedParams[k], v)
+		if _, ok := queryParams[k]; ok {
+			queryParams[k] = append(queryParams[k], v)
 		} else {
-			consolidatedParams[k] = []string{v}
+			queryParams[k] = []string{v}
 		}
 	}
 
-	keys := getSortedKeys(consolidatedParams)
+	keys := getSortedKeys(queryParams)
 
 	for _, k := range keys {
-		sort.Strings(consolidatedParams[k])
+		sort.Strings(queryParams[k])
 
-		for _, vV := range consolidatedParams[k] {
-			str := k + "=" + vV + "&"
-			paramsBuilder.WriteString(str)
+		for _, vV := range queryParams[k] {
+			paramsBuilder.WriteString(k + "=" + vV + "&")
 		}
 	}
 
-	params = strings.TrimSuffix(paramsBuilder.String(), "&")
-
-	return params
+	return strings.TrimSuffix(paramsBuilder.String(), "&")
 }
 
 func getBaseURIString(uri string) (string, error) {
