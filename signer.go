@@ -18,7 +18,7 @@ import (
 
 const nonceLength = 8
 
-// GetAuthorizationHeader is a main function which returns OAuth1.0a header
+// GetAuthorizationHeader creates a Mastercard API compliant OAuth Authorization header
 func GetAuthorizationHeader(uri, method, payload, consumerKey, signingKey string) (string, error) {
 	var err error
 	var queryParams map[string][]string
