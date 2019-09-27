@@ -31,32 +31,32 @@ go get -u github.com/noglik/oauth1-signer-go
 import (
   "encoding/pem"
   "io/ioutil"
-  
+
   "golang.org/x/crypto/pkcs12"
 )
 
 func main() {
   data, err := ioutil.ReadFile("./your-p12-file-path.p12")
 
-	if err != nil {
-		panic(err)
-	}
+  if err != nil {
+    panic(err)
+  }
 
-	blocks, err := pkcs12.ToPEM(data, "your-password")
+  blocks, err := pkcs12.ToPEM(data, "your-password")
 
-	if err != nil {
-		panic(err)
-	}
+  if err != nil {
+    panic(err)
+  }
 
-	var pemData []byte
+  var pemData []byte
 
-	for _, b := range blocks {
-		pemData = append(pemData, pem.EncodeToMemory(b)...)
-	}
+  for _, b := range blocks {
+    pemData = append(pemData, pem.EncodeToMemory(b)...)
+  }
 
-	private, _ := pem.Decode(pemData)
+  private, _ := pem.Decode(pemData)
 
-	signingKey := string(pem.EncodeToMemory(private))
+  signingKey := string(pem.EncodeToMemory(private))
 }
 ```
 
