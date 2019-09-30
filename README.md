@@ -1,4 +1,6 @@
-# Oauth1-signer-go
+# Oauth1-signer-go NO LONGER SUPPORTED
+
+Mastercard created own [package](https://github.com/Mastercard/oauth1-signer-go) for sign creation, so there is no point to support this any longer.
 
 Basically just a go version of [oauth1-signer-nodejs](https://github.com/Mastercard/oauth1-signer-nodejs).
 
