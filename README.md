@@ -1,6 +1,8 @@
 # Oauth1-signer-go
 
-This package is partially tested with sanbox service. DO NOT USE IN PRODUCTION.
+Basically just a go version of [oauth1-signer-nodejs](https://github.com/Mastercard/oauth1-signer-nodejs).
+
+This package is partially tested with sanbox service.
 
 ## Overview
 
@@ -14,7 +16,7 @@ Go 1.12.9
 
 ### Prerequisites
 
-Before using this library, you will need to set up a project in [Mastercard Developer Portal]().
+Before using this library, you will need to set up a project in [Mastercard Developer Portal](https://developer.mastercard.com/).
 As part of this setup, you'll receive credentials for your app.
 - A consumer key (displayed on Mastercard Developer Portal)
 - A private request signging key (matching the public certificate displayed on the Mastercard Developer Portal)
