@@ -58,7 +58,7 @@ func TestGetAuthorizationHeader(t *testing.T) {
 		t.Run(tC.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := GetAuthorizationHeader(uri, method, tC.body, consumerKey, signingKey)
+			got, err := GetAuthorizationHeader(uri, method, tC.body, consumerKey, []byte(signingKey))
 
 			if err != nil {
 				t.Error(err)
@@ -82,7 +82,7 @@ func BenchmarkGetAuthorizationHeader(b *testing.B) {
 	var r string
 
 	for i := 0; i < b.N; i++ {
-		r, _ = GetAuthorizationHeader(uri, method, "", consumerKey, signingKey)
+		r, _ = GetAuthorizationHeader(uri, method, "", consumerKey, []byte(signingKey))
 	}
 
 	result = r
@@ -451,7 +451,7 @@ func TestSignSignatureBaseString(t *testing.T) {
 		t.Run(tC.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := signSignatureBaseString(tC.signatureBaseString, signingKey)
+			got, err := signSignatureBaseString(tC.signatureBaseString, []byte(signingKey))
 
 			if err != nil {
 				t.Error(err)

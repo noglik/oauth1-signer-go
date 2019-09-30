@@ -58,7 +58,7 @@ func main() {
 
   private, _ := pem.Decode(pemData)
 
-  signingKey := string(pem.EncodeToMemory(private))
+  signingKey := pem.EncodeToMemory(private)
 }
 ```
 

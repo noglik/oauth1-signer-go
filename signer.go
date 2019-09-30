@@ -19,7 +19,7 @@ import (
 const nonceLength = 8
 
 // GetAuthorizationHeader creates a Mastercard API compliant OAuth Authorization header
-func GetAuthorizationHeader(uri, method, payload, consumerKey, signingKey string) (string, error) {
+func GetAuthorizationHeader(uri, method, payload, consumerKey string, signingKey []byte) (string, error) {
 	var err error
 	var queryParams map[string][]string
 	var oauthParams map[string]string
@@ -182,13 +182,13 @@ func getSignatureBaseString(method, baseURI, params string) string {
 	return sbs
 }
 
-func signSignatureBaseString(signatureBaseString, signingKey string) (string, error) {
+func signSignatureBaseString(signatureBaseString string, signingKey []byte) (string, error) {
 	var Reader io.Reader
 	var err error
 	var privateKey *rsa.PrivateKey
 	var signature []byte
 
-	block, _ := pem.Decode([]byte(signingKey))
+	block, _ := pem.Decode(signingKey)
 
 	privateKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
 
